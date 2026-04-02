@@ -30,6 +30,8 @@ The candidate-first model solves this by keeping a human (or a reviewing agent) 
 |------|---------|
 | `nightly-memory-mine.py` | Extract candidates from daily logs, tasks, outbox |
 | `nightly-memory-review-summary.py` | Generate a checklist for reviewing candidates |
+| `run-nightly-memory-cycle.sh` | Wrapper to run both scripts for a date (defaults to yesterday) |
+| `post-improvements-summary.sh` | Post review summary to Discord for human review |
 
 ## Directory structure
 
@@ -148,6 +150,39 @@ This system assumes a layered memory architecture:
 | **Skills** (`memory/skills/`) | Reusable workflows | When proven |
 | **Candidates** (`*/candidates/`) | Pending proposals | Nightly |
 
+## Nightly automation
+
+### Previous-day timing
+
+When run via cron, the system processes **yesterday's** data, not today's. This makes sense because:
+
+- At 3 AM, "today" has barely started
+- Yesterday's logs are complete
+- Review happens the following morning
+
+The wrapper scripts default to yesterday when run without arguments.
+
+### Example cron schedule
+
+```cron
+# 3:00 AM - generate candidates and review summary for yesterday
+0 3 * * * /path/to/run-nightly-memory-cycle.sh >> /path/to/logs/memory-cycle.log 2>&1
+
+# 3:05 AM - post review summary to Discord
+5 3 * * * /path/to/post-improvements-summary.sh >> /path/to/logs/improvements-post.log 2>&1
+```
+
+### Discord review loop
+
+The operational workflow posts review summaries to a Discord `#improvements` channel:
+
+1. **3:00 AM** — `run-nightly-memory-cycle.sh` generates candidates for yesterday
+2. **3:05 AM** — `post-improvements-summary.sh` posts the summary to Discord
+3. **Morning** — humans review candidates in the Discord thread
+4. **Approval** — approved items are manually promoted or handed to an agent via coordination bus
+
+This keeps the review process visible and collaborative.
+
 ## Safe rollout
 
 Recommended sequence:
@@ -156,14 +191,14 @@ Recommended sequence:
 2. Inspect candidate quality
 3. Adjust prompts and heuristics as needed
 4. Wire to cron only after validation
-5. Consider posting review summaries to a notification channel
+5. Post review summaries to a Discord channel for visibility
 
 ## Future extensions
 
 - Project update suggestions
 - Improved duplicate detection
 - More input sources (chat transcripts, etc.)
-- Optional auto-promotion for high-confidence updates
+- Native OpenClaw cron delivery (instead of shell wrapper)
 - Integration with coordination task system
 
 ## License

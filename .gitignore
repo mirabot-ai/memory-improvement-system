@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Generated candidates (these are workspace-specific)
+# Uncomment if you want to exclude them:
+# *-memory-candidates.md
+# *-skill-candidates.md
+# *-review-summary.md

@@ -38,13 +38,14 @@ TMP_MESSAGE="$(mktemp)"
   sed -n '1,220p' "$SUMMARY_FILE"
 } > "$TMP_MESSAGE"
 
-# Post via OpenClaw agent delivery
+# Legacy shell-based delivery helper.
+# Prefer native OpenClaw cron delivery for production workflows when possible.
 openclaw agent \
-  --agent main \
-  --message "Post the following review summary to the Discord improvements channel:" \
+  --agent improv \
+  --message "$(cat "$TMP_MESSAGE")" \
   --deliver \
   --reply-channel discord \
-  --reply-account default \
+  --reply-account improv \
   --reply-to "$CHANNEL_ID"
 
 rm -f "$TMP_MESSAGE"

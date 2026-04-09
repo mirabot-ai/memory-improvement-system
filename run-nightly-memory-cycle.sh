@@ -21,8 +21,10 @@ DATE_ARG="${1:-$DEFAULT_DATE}"
 
 echo "Running nightly memory cycle for $DATE_ARG"
 
-python3 "$WORKSPACE/scripts/nightly-memory-mine.py" --date "$DATE_ARG"
-python3 "$WORKSPACE/scripts/nightly-memory-review-summary.py" --date "$DATE_ARG"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+python3 "$SCRIPT_DIR/nightly-memory-mine.py" --date "$DATE_ARG"
+python3 "$SCRIPT_DIR/nightly-memory-review-summary.py" --date "$DATE_ARG"
 
 echo "Nightly memory cycle complete for $DATE_ARG"
 echo "Generated:"

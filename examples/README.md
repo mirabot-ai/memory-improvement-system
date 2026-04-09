@@ -2,6 +2,8 @@
 
 Sample outputs from the memory mining system.
 
+These examples reflect the review-layer role of this repo: native OpenClaw memory stores and retrieves memory, while this project stages candidates for human or Improv review.
+
 ## Files
 
 - `sample-memory-candidates.md` — Example memory candidate file

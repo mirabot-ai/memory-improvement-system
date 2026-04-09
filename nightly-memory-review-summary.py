@@ -57,6 +57,7 @@ def generate_review_summary(day: str, mem_items: list, skill_items: list) -> lis
         f'# Review Summary - {day}',
         '',
         'Review checklist for nightly-generated memory and skill candidates.',
+        'Use this alongside current durable memory and any Dreaming output if enabled.',
         '',
         '## Review guidance',
         '',
@@ -109,11 +110,12 @@ def generate_review_summary(day: str, mem_items: list, skill_items: list) -> lis
         '## After review',
         '',
         '1. Mark approved items above',
-        '2. Manually promote approved candidates to:',
+        '2. Compare approved candidates against `MEMORY.md`, `memory/projects/`, `memory/skills/`, and `DREAMS.md` when available.',
+        '3. Manually promote approved candidates to:',
         '   - `MEMORY.md` for durable facts/preferences',
         '   - `memory/skills/*.md` for reusable workflows',
         '   - `memory/projects/*.md` for project-specific context',
-        '3. Delete or archive dismissed candidates',
+        '4. Delete or archive dismissed candidates',
     ])
 
     return lines

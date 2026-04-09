@@ -117,6 +117,20 @@ def existing_skill_titles() -> list[str]:
     return titles
 
 
+def existing_project_titles() -> list[str]:
+    """Get lowercase titles of existing project memory docs."""
+    project_dir = WORKSPACE / 'memory' / 'projects'
+    titles = []
+    if not project_dir.exists():
+        return titles
+    for path in project_dir.glob('*.md'):
+        txt = read_text(path)
+        mt = re.search(r'^#\s+(.+)$', txt, re.M)
+        if mt:
+            titles.append(mt.group(1).strip().lower())
+    return titles
+
+
 def generate_memory_candidates(day: str, daily_text: str, done_tasks: list, outbox: list) -> list[str]:
     """Generate memory candidate file content."""
     lines = [
@@ -152,7 +166,13 @@ def generate_memory_candidates(day: str, daily_text: str, done_tasks: list, outb
     return lines
 
 
-def generate_skill_candidates(day: str, done_tasks: list, outbox: list, skill_titles: list) -> list[str]:
+def generate_skill_candidates(
+    day: str,
+    done_tasks: list,
+    outbox: list,
+    skill_titles: list,
+    project_titles: list,
+) -> list[str]:
     """Generate skill candidate file content."""
     lines = [
         f'# Skill Candidates - {day}',
@@ -195,6 +215,13 @@ def generate_skill_candidates(day: str, done_tasks: list, outbox: list, skill_ti
         lines.append(f'  - Suggested action: {"merge/update existing skill" if maybe_merge else cand["action"]}')
         lines.append(f'  - Why: {cand["why"]}')
         lines.append(f'  - Evidence: {cand["evidence"]}')
+        duplicate_note = []
+        if any(lower_title in t or t in lower_title for t in project_titles):
+            duplicate_note.append('possible overlap with project memory')
+        if maybe_merge:
+            duplicate_note.append('possible overlap with existing skill memory')
+        if duplicate_note:
+            lines.append(f'  - Duplicate check: {"; ".join(duplicate_note)}')
         lines.append('')
 
     return lines
@@ -227,13 +254,13 @@ def main():
     daily_file = WORKSPACE / 'memory' / f'{day}.md'
     daily_text = read_text(daily_file)
     done_tasks = task_summaries(WORKSPACE / 'coordination' / 'tasks' / 'done')
-    failed_tasks = task_summaries(WORKSPACE / 'coordination' / 'tasks' / 'failed')
     outbox = outbox_summaries()
     skill_titles = existing_skill_titles()
+    project_titles = existing_project_titles()
 
     # Generate candidates
     memory_lines = generate_memory_candidates(day, daily_text, done_tasks, outbox)
-    skill_lines = generate_skill_candidates(day, done_tasks, outbox, skill_titles)
+    skill_lines = generate_skill_candidates(day, done_tasks, outbox, skill_titles, project_titles)
 
     if args.dry_run:
         print('=== MEMORY CANDIDATES ===')

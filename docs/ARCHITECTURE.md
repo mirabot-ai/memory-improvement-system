@@ -2,11 +2,13 @@
 
 This document describes the memory layer design and candidate-first safety model.
 
+OpenClaw native memory is now the underlying memory substrate. This repo sits above it as a conservative review and promotion layer.
+
 ## Design goals
 
 1. **Improve durably** — build useful long-term memory without breaking workflows
 2. **Stay interpretable** — keep memory human-readable and inspectable
-3. **Separate layers** — raw logs vs. curated memory vs. project context
+3. **Separate layers** — native memory storage/recall vs. candidate review/promotion
 4. **Enable review** — generate candidates, not direct rewrites
 5. **Support multi-agent** — work with delegated agents and coordination systems
 
@@ -90,9 +92,10 @@ The nightly automation should generate candidates first. It should **NOT** direc
 - Established skill files
 
 This keeps memory updates:
-- **Reviewable** — humans can inspect before promotion
+- **Reviewable** — humans or Improv can inspect before promotion
 - **Reversible** — bad candidates are simply deleted
 - **Auditable** — you can see what was proposed vs. what was accepted
+- **Aligned with OpenClaw** — native memory remains the source of storage and recall truth
 
 ## What makes a good candidate
 
@@ -113,6 +116,17 @@ This keeps memory updates:
 - Weakly supported inferred preferences
 - Narrow procedures with no reuse potential
 
+## Dreaming and review signals
+
+If Dreaming is enabled, treat Dreaming output as a supervised secondary signal.
+
+Use it to:
+- compare overlap with mined candidates
+- spot durable themes that may deserve review
+- catch possible omissions
+
+Do not use Dreaming output as an autonomous source of truth or as a direct promotion path.
+
 ## Multi-agent implications
 
 As more agents are added:
@@ -124,6 +138,11 @@ As more agents are added:
 | Coordination | Tracks delegated agent work |
 | Skills | Captures reusable workflows |
 | Daily logs | Per-agent or combined |
+| Dreaming | Secondary comparison signal only |
+
+Recommended operating roles:
+- **Improv** reviews, triages, deduplicates, and recommends promotion actions
+- **Patchbay** implements approved repo, script, doc, and workflow changes
 
 ## Evolution path
 
@@ -139,6 +158,7 @@ As more agents are added:
 - Add project update suggestions
 
 ### Phase 3 (future)
-- Optional semi-automatic promotion for high-confidence updates
+- Better duplicate detection against native OpenClaw memory surfaces
 - Integration with notification channels
 - Coordination task creation for review
+- Optional comparison tooling between Dreaming output and mined candidates

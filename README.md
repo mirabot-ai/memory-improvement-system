@@ -31,7 +31,22 @@ The candidate-first model solves this by keeping a human (or a reviewing agent) 
 | `nightly-memory-mine.py` | Extract candidates from daily logs, tasks, outbox |
 | `nightly-memory-review-summary.py` | Generate a checklist for reviewing candidates |
 | `run-nightly-memory-cycle.sh` | Wrapper to run both scripts for a date (defaults to yesterday) |
-| `post-improvements-summary.sh` | Post review summary to Discord for human review |
+| `post-improvements-summary.sh` | Legacy shell posting helper for Discord review summaries |
+
+## Relationship to newer OpenClaw memory features
+
+This repo should now be understood as a **review and promotion safety layer**, not a replacement for native OpenClaw memory.
+
+OpenClaw now provides native memory capabilities such as:
+- `MEMORY.md` and `memory/YYYY-MM-DD.md` as the core memory surfaces
+- `memory_search` and `memory_get` for retrieval
+- hybrid/semantic memory indexing
+- optional `DREAMS.md` and Dreaming-based consolidation
+
+The safest operational model is:
+1. Native OpenClaw memory handles storage, indexing, and recall.
+2. This repo handles **candidate generation, review summaries, and human-visible approval flow**.
+3. Dreaming is treated as a secondary review signal, not an autonomous source of truth.
 
 ## Directory structure
 
@@ -110,12 +125,20 @@ It generates two candidate files:
 
 1. Run the mining script (nightly or manually)
 2. Run the review summary script
-3. Open the review summary file
+3. Compare candidate outputs against other memory signals when available:
+   - current durable memory in `MEMORY.md`
+   - project memory in `memory/projects/`
+   - approved skill memory in `memory/skills/`
+   - Dreaming output in `DREAMS.md` or `memory/.dreams/` when enabled
 4. For each candidate, mark: approve / dismiss / defer
 5. Manually promote approved candidates to:
    - `MEMORY.md` (for durable facts)
    - `memory/skills/*.md` (for reusable workflows)
    - `memory/projects/*.md` (for project-specific context)
+
+Recommended roles:
+- **Improv**: review, triage, deduplication, promotion recommendations
+- **Patchbay**: approved implementation changes to scripts/docs/repos
 
 ## What should NOT become durable memory
 
@@ -196,10 +219,11 @@ Recommended sequence:
 ## Future extensions
 
 - Project update suggestions
-- Improved duplicate detection
-- More input sources (chat transcripts, etc.)
-- Native OpenClaw cron delivery (instead of shell wrapper)
+- Improved duplicate detection against `MEMORY.md`, `memory/projects/`, and `memory/skills/`
+- More input sources (chat transcripts, coordination state, review artifacts)
+- Native OpenClaw cron delivery as the preferred default, with shell wrappers kept as compatibility helpers
 - Integration with coordination task system
+- Safe comparison of Dreaming candidates vs nightly mined candidates before any semi-automated promotion
 
 ## License
 

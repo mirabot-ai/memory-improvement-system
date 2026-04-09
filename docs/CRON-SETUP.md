@@ -69,7 +69,7 @@ sudo systemctl start memory-mine.timer
 
 ## OpenClaw cron integration
 
-If using OpenClaw, you can schedule via the native cron tool:
+If using OpenClaw, prefer the native cron tool over shell wrappers whenever practical.
 
 ```
 Schedule: kind=cron, expr="0 3 * * *", tz="America/New_York"
@@ -77,21 +77,25 @@ Payload: kind=agentTurn, message="Run nightly memory mining for yesterday and ge
 SessionTarget: isolated
 ```
 
-For recurring Discord posts, prefer native OpenClaw cron delivery over shell wrappers when possible. Native cron provides:
-- Cleaner channel delivery
-- Explicit session targeting
-- Better run logs and delivery status
+Native OpenClaw cron is preferred because it provides:
+- cleaner channel delivery
+- explicit session targeting
+- better run logs and delivery status
+- better alignment with agent-owned channels such as Improv in `#improvements`
+
+Use shell wrappers only when you specifically need compatibility with an external scheduler or a standalone repo demo.
 
 ## Discord review loop
 
 The recommended operational workflow:
 
-1. **3:00 AM** — cron runs `run-nightly-memory-cycle.sh` (generates candidates for yesterday)
-2. **3:05 AM** — cron runs `post-improvements-summary.sh` (posts to Discord `#improvements`)
-3. **Morning** — humans review candidates in the Discord channel
-4. **Approval** — approved items are manually promoted to memory, or handed to an agent via coordination bus
+1. **3:00 AM** — native OpenClaw cron or `run-nightly-memory-cycle.sh` generates candidates for yesterday
+2. **3:05 AM** — native OpenClaw cron delivery or `post-improvements-summary.sh` posts to Discord `#improvements`
+3. **Morning** — humans and/or Improv review candidates in the Discord channel
+4. **Approval** — approved items are manually promoted to memory, or handed to Patchbay via coordination bus
+5. **Optional comparison lane** — if Dreaming is enabled, compare Dreaming suggestions against the nightly candidate set before promotion
 
-This keeps the review visible and collaborative. Configure the Discord channel ID in `post-improvements-summary.sh`.
+This keeps the review visible and collaborative. Configure the Discord channel ID in `post-improvements-summary.sh` only if you are using the legacy shell helper.
 
 ## Notification options
 

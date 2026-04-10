@@ -1,8 +1,8 @@
 # Memory Architecture
 
-This document describes the memory layer design and candidate-first safety model.
+This document describes the local-first multi-agent memory design and candidate-first safety model.
 
-OpenClaw native memory is now the underlying memory substrate. This repo sits above it as a conservative review and promotion layer.
+OpenClaw native memory is the underlying memory substrate. This repo sits above it as a conservative review and promotion layer.
 
 ## Design goals
 
@@ -11,6 +11,12 @@ OpenClaw native memory is now the underlying memory substrate. This repo sits ab
 3. **Separate layers** — native memory storage/recall vs. candidate review/promotion
 4. **Enable review** — generate candidates, not direct rewrites
 5. **Support multi-agent** — work with delegated agents and coordination systems
+
+## Core operating rule
+
+- agents write locally
+- Improv reviews globally
+- shared memory promotes conservatively
 
 ## Memory layers
 
@@ -37,9 +43,10 @@ OpenClaw native memory is now the underlying memory substrate. This repo sits ab
 - Tasks, decisions, experiments, conversations, failures, outcomes
 
 **Rules:**
+- Each active workspace keeps its own local daily log
 - Okay to be rough and verbose
 - Source material for nightly mining
-- Delete or archive old logs as needed
+- Channel activity should usually be summarized into the owning agent's local log rather than treated as a separate unmanaged memory universe
 
 ### 3. Project memory
 
@@ -67,20 +74,40 @@ OpenClaw native memory is now the underlying memory substrate. This repo sits ab
 - Only promote patterns that proved useful more than once
 - Merge similar skills rather than creating duplicates
 
-### 5. Candidate staging
+### 5. Agent-scoped memory
 
-**Directories:**
-- `memory/candidates/` — memory candidate proposals
-- `memory/skills/candidates/` — skill candidate proposals
+**Files and directories:**
+- local `MEMORY.md`
+- local `memory/projects/`
+- local `memory/skills/`
+- local candidate files when useful
 
 **Purpose:**
-- Pending proposals from nightly mining
-- Never automatically promoted to curated memory
+- Keep agent-local operating knowledge separate from shared canon
+- Preserve persona, role conventions, and routing behavior without overpromoting them
+
+**Rules:**
+- Keep findings local unless they clearly matter beyond one agent
+- Do not treat agent-local conventions as shared truth by default
+- Promote only after review demonstrates project or lab-wide value
+
+### 6. Candidate staging and review outputs
+
+**Directories:**
+- `memory/candidates/`
+- `memory/skills/candidates/`
+- `memory/projects/candidates/`
+- `memory/reviews/`
+
+**Purpose:**
+- Stage promotion proposals from nightly review
+- Record cross-agent coverage and synthesis
+- Never automatically promote to curated memory
 
 **Rules:**
 - Review daily or periodically
-- Approve, dismiss, or defer each candidate
-- Delete after processing
+- Approve, dismiss, defer, or keep local
+- Keep evidence pointers so promotions remain auditable
 
 ## Candidate-first policy
 
@@ -133,15 +160,17 @@ As more agents are added:
 
 | Memory layer | Scope |
 |--------------|-------|
-| Long-term (`MEMORY.md`) | Sparse and stable, shared |
-| Project (`memory/projects/`) | Carries most context |
-| Coordination | Tracks delegated agent work |
+| Local `MEMORY.md` | Agent-scoped, durable, local by default |
+| Local daily logs | Per-agent operational evidence |
+| Project (`memory/projects/`) | Carries project context across agents |
+| Shared/global `MEMORY.md` | Sparse and stable, only after promotion |
 | Skills | Captures reusable workflows |
-| Daily logs | Per-agent or combined |
+| Reviews | Cross-agent synthesis and coverage |
 | Dreaming | Secondary comparison signal only |
 
 Recommended operating roles:
-- **Improv** reviews, triages, deduplicates, and recommends promotion actions
+- **Agents generally** write local logs and local durable memory
+- **Improv** reviews, triages, compares across agents, and recommends promotion actions
 - **Patchbay** implements approved repo, script, doc, and workflow changes
 
 ## Evolution path
@@ -152,13 +181,14 @@ Recommended operating roles:
 - Nightly mining generates candidates only
 - Manual review and promotion
 
-### Phase 2 (future)
-- Review candidate quality over time
-- Refine mining heuristics
-- Add project update suggestions
+### Phase 2 (current reviewed extension)
+- Review candidate quality across active workspaces
+- Refine cross-agent mining heuristics
+- Add project update suggestions, shared skill candidates, and global memory candidates
+- Produce review artifacts such as agent coverage and cross-agent review summaries
 
 ### Phase 3 (future)
-- Better duplicate detection against native OpenClaw memory surfaces
+- Better duplicate detection against local and shared memory surfaces
 - Integration with notification channels
 - Coordination task creation for review
 - Optional comparison tooling between Dreaming output and mined candidates

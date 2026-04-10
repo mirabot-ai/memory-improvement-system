@@ -1,6 +1,6 @@
 # Cron Setup Guide
 
-How to schedule automatic nightly memory mining.
+How to schedule automatic nightly local-first memory review.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ Before automating, manually run the scripts for several days to:
 
 ## Previous-day timing
 
-The nightly cycle processes **yesterday's** data, not today's. At 3 AM, "today" has barely started, so we review the previous day's complete record.
+The nightly cycle processes **yesterday's** data, not today's. At 3 AM, "today" has barely started, so review should use the previous day's complete local logs and coordination evidence.
 
 The wrapper scripts (`run-nightly-memory-cycle.sh`, `post-improvements-summary.sh`) default to yesterday when run without arguments.
 
@@ -73,7 +73,7 @@ If using OpenClaw, prefer the native cron tool over shell wrappers whenever prac
 
 ```
 Schedule: kind=cron, expr="0 3 * * *", tz="America/New_York"
-Payload: kind=agentTurn, message="Run nightly memory mining for yesterday and generate review summary"
+Payload: kind=agentTurn, message="Run nightly cross-agent memory review for yesterday, generate candidate outputs, and produce the review summary"
 SessionTarget: isolated
 ```
 
@@ -82,6 +82,7 @@ Native OpenClaw cron is preferred because it provides:
 - explicit session targeting
 - better run logs and delivery status
 - better alignment with agent-owned channels such as Improv in `#improvements`
+- clearer ownership of the review step in a multi-agent lab
 
 Use shell wrappers only when you specifically need compatibility with an external scheduler or a standalone repo demo.
 
@@ -89,11 +90,12 @@ Use shell wrappers only when you specifically need compatibility with an externa
 
 The recommended operational workflow:
 
-1. **3:00 AM** — native OpenClaw cron or `run-nightly-memory-cycle.sh` generates candidates for yesterday
-2. **3:05 AM** — native OpenClaw cron delivery or `post-improvements-summary.sh` posts to Discord `#improvements`
-3. **Morning** — humans and/or Improv review candidates in the Discord channel
-4. **Approval** — approved items are manually promoted to memory, or handed to Patchbay via coordination bus
-5. **Optional comparison lane** — if Dreaming is enabled, compare Dreaming suggestions against the nightly candidate set before promotion
+1. **During the day** — each agent appends meaningful activity to its own local daily log, and updates local `MEMORY.md` only for durable local knowledge
+2. **3:00 AM** — native OpenClaw cron or `run-nightly-memory-cycle.sh` runs the nightly review for yesterday's evidence
+3. **3:05 AM** — native OpenClaw cron delivery or `post-improvements-summary.sh` posts the summary to Discord `#improvements`
+4. **Morning** — humans and/or Improv review cross-agent outputs such as agent coverage, cross-agent review, global memory candidates, shared skill candidates, and project update candidates
+5. **Approval** — approved items are manually promoted to shared memory, project memory, or skills, or handed to Patchbay via coordination bus
+6. **Optional comparison lane** — if Dreaming is enabled, compare Dreaming suggestions against the nightly candidate set before promotion
 
 This keeps the review visible and collaborative. Configure the Discord channel ID in `post-improvements-summary.sh` only if you are using the legacy shell helper.
 
@@ -128,7 +130,7 @@ grep memory-mine /var/log/syslog
 ## Troubleshooting
 
 **No candidates generated:**
-- Check that daily memory files exist (`memory/YYYY-MM-DD.md`)
+- Check that local daily memory files exist (`memory/YYYY-MM-DD.md`) in the expected workspaces
 - Verify path configuration in scripts
 - Run with `--dry-run` to debug
 

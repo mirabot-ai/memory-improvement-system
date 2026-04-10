@@ -1,8 +1,8 @@
 # Examples
 
-Sample outputs from the memory mining system.
+Sample outputs from the memory review system.
 
-These examples reflect the review-layer role of this repo: native OpenClaw memory stores and retrieves memory, while this project stages candidates for human or Improv review.
+These examples reflect the review-layer role of this repo: native OpenClaw memory stores and retrieves memory, while this project stages candidates for human or Improv review in a local-first multi-agent setup.
 
 ## Files
 
@@ -12,7 +12,7 @@ These examples reflect the review-layer role of this repo: native OpenClaw memor
 
 ## How to use
 
-These examples show what the nightly mining scripts produce. Use them to:
+These examples show what the nightly mining scripts produce. In a fuller deployment, they sit alongside cross-agent review artifacts such as agent coverage, cross-agent review, global memory candidates, shared skill candidates, and project update candidates. Use them to:
 
 1. Understand the output format
 2. Practice the review workflow

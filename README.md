@@ -1,12 +1,12 @@
 # Memory Improvement System
 
-A conservative, candidate-first approach to agent memory improvement.
+A conservative, candidate-first memory review and promotion layer for local-first multi-agent memory.
 
 ## What this does
 
-This system generates **candidate** memory and skill updates from daily operational records — without directly modifying core memory files. It's designed for safe, reviewable memory improvement.
+This system packages the reviewed safety layer around OpenClaw memory. Agents write memory locally, nightly review synthesizes evidence across active workspaces, and shared memory is promoted conservatively from candidate files rather than direct autonomous rewrites.
 
-**Key principle:** Generate candidates first, review and approve later. Never autonomously overwrite curated memory.
+**Key principle:** agents write locally, Improv reviews globally, and curated shared memory only changes after review.
 
 ## Why candidate-first?
 
@@ -28,10 +28,25 @@ The candidate-first model solves this by keeping a human (or a reviewing agent) 
 
 | File | Purpose |
 |------|---------|
-| `nightly-memory-mine.py` | Extract candidates from daily logs, tasks, outbox |
-| `nightly-memory-review-summary.py` | Generate a checklist for reviewing candidates |
+| `nightly-memory-mine.py` | Repo demo script for candidate extraction and staging |
+| `nightly-memory-review-summary.py` | Repo demo script for generating a review checklist |
 | `run-nightly-memory-cycle.sh` | Wrapper to run both scripts for a date (defaults to yesterday) |
 | `post-improvements-summary.sh` | Legacy shell posting helper for Discord review summaries |
+| `docs/ARCHITECTURE.md` | Local-first multi-agent memory architecture and promotion rules |
+| `docs/CRON-SETUP.md` | Nightly scheduling guidance for the review layer |
+| `examples/` | Sample candidate and review outputs |
+
+## Local-first multi-agent model
+
+The approved operating model is:
+
+1. Each agent or workspace owns its own local `MEMORY.md`.
+2. Each agent or workspace keeps local daily logs at `memory/YYYY-MM-DD.md`.
+3. Local memory stays local by default.
+4. Improv reviews agent-local evidence across active workspaces.
+5. Shared or global memory is promoted conservatively from reviewed evidence.
+
+This repo should therefore be read as the review layer for a broader memory system, not as the only place memory lives.
 
 ## Relationship to newer OpenClaw memory features
 
@@ -45,30 +60,43 @@ OpenClaw now provides native memory capabilities such as:
 
 The safest operational model is:
 1. Native OpenClaw memory handles storage, indexing, and recall.
-2. This repo handles **candidate generation, review summaries, and human-visible approval flow**.
-3. Dreaming is treated as a secondary review signal, not an autonomous source of truth.
+2. Agents append meaningful work to local daily logs and update local `MEMORY.md` only for durable local knowledge.
+3. Improv reviews cross-agent evidence and produces scoped candidate outputs.
+4. This repo documents and demonstrates the **candidate generation, review summaries, and human-visible approval flow** around that process.
+5. Dreaming is treated as a secondary review signal, not an autonomous source of truth.
 
 ## Directory structure
 
-The system expects this workspace layout:
+The broader local-first system expects per-workspace local memory plus shared review outputs:
 
 ```
 workspace/
+├── MEMORY.md
 ├── memory/
-│   ├── YYYY-MM-DD.md           # Daily operational logs
-│   ├── candidates/             # Memory candidate staging
+│   ├── YYYY-MM-DD.md
+│   ├── candidates/
 │   │   ├── YYYY-MM-DD-memory-candidates.md
+│   │   ├── YYYY-MM-DD-global-memory-candidates.md
 │   │   └── YYYY-MM-DD-review-summary.md
+│   ├── projects/
+│   │   ├── <project-slug>.md
+│   │   └── candidates/
+│   │       └── YYYY-MM-DD-project-update-candidates.md
+│   ├── reviews/
+│   │   ├── YYYY-MM-DD-agent-coverage.md
+│   │   └── YYYY-MM-DD-cross-agent-review.md
 │   └── skills/
-│       ├── *.md                # Approved skill docs
-│       └── candidates/         # Skill candidate staging
-│           └── YYYY-MM-DD-skill-candidates.md
+│       ├── *.md
+│       └── candidates/
+│           └── YYYY-MM-DD-shared-skill-candidates.md
 ├── coordination/
 │   └── tasks/
-│       ├── done/               # Completed task files
-│       └── failed/             # Failed task files
-└── MEMORY.md                   # Curated long-term memory (never auto-edited)
+│       ├── done/
+│       └── failed/
+└── agents or sibling workspaces with their own local MEMORY.md and memory/
 ```
+
+In practice, the scripts in this repo are a conservative reference implementation. A full lab deployment may also use companion helpers for appending agent-local daily logs and agent-local durable memory before nightly review runs.
 
 ## Usage
 
@@ -109,17 +137,23 @@ PATCHBAY = Path('/path/to/agent-workspace')  # optional, for outbox integration
 
 ## What gets mined
 
-The nightly mining script inspects:
+The nightly mining layer now conceptually inspects:
 
-- **Daily memory files** — `memory/YYYY-MM-DD.md`
+- **Agent-local daily memory files** — `memory/YYYY-MM-DD.md` across active workspaces
+- **Agent-local `MEMORY.md` files** — for durable local context
+- **Local candidate files** — when already present in agent workspaces
 - **Completed tasks** — `coordination/tasks/done/*.md`
 - **Failed tasks** — `coordination/tasks/failed/*.md`
 - **Agent outbox** — results from delegated agent work
 
-It generates two candidate files:
+It produces or supports these review outputs:
 
-1. **Memory candidates** — facts, outcomes, and observations worth keeping
-2. **Skill candidates** — reusable workflows and operational patterns
+1. **Agent coverage** — what workspaces and evidence sources were reviewed
+2. **Cross-agent review** — what stayed local vs project or global
+3. **Global memory candidates** — durable shared findings worth promotion
+4. **Shared skill candidates** — reusable workflows seen across work
+5. **Project update candidates** — project-scoped updates with supporting evidence
+6. **Review summary** — a compact approval checklist for human or Improv review
 
 ## Review workflow
 
@@ -137,7 +171,8 @@ It generates two candidate files:
    - `memory/projects/*.md` (for project-specific context)
 
 Recommended roles:
-- **Improv**: review, triage, deduplication, promotion recommendations
+- **Agents generally**: write meaningful daily logs locally, keep durable agent-specific knowledge local by default
+- **Improv**: review, triage, cross-agent synthesis, deduplication, promotion recommendations
 - **Patchbay**: approved implementation changes to scripts/docs/repos
 
 ## What should NOT become durable memory
@@ -172,6 +207,17 @@ This system assumes a layered memory architecture:
 | **Project** (`memory/projects/`) | Project-specific state | Per-project |
 | **Skills** (`memory/skills/`) | Reusable workflows | When proven |
 | **Candidates** (`*/candidates/`) | Pending proposals | Nightly |
+
+## Helper scripts in the wider lab setup
+
+In the reviewed local-first deployment, companion helpers may exist outside this repo for tasks such as:
+
+- appending agent-local daily logs
+- appending agent-local durable memory
+- running cross-agent nightly mining
+- generating cross-agent review summaries
+
+Those helpers support the same candidate-first policy. This repo remains the documentation and reference package for the review model.
 
 ## Nightly automation
 
@@ -218,12 +264,15 @@ Recommended sequence:
 
 ## Future extensions
 
-- Project update suggestions
-- Improved duplicate detection against `MEMORY.md`, `memory/projects/`, and `memory/skills/`
-- More input sources (chat transcripts, coordination state, review artifacts)
+- Better duplicate detection against local and shared memory surfaces
+- More input sources, including carefully reviewed transcript evidence
 - Native OpenClaw cron delivery as the preferred default, with shell wrappers kept as compatibility helpers
 - Integration with coordination task system
 - Safe comparison of Dreaming candidates vs nightly mined candidates before any semi-automated promotion
+
+## Current packaging note
+
+This update documents the approved multi-agent local-first operating model without redesigning the system. It does not require autonomous memory promotion, and it keeps the candidate-first safety posture intact.
 
 ## License
 
